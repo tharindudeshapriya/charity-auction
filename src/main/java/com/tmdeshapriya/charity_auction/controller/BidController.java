@@ -9,18 +9,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/items/{itemId}/bids")
+@RequestMapping("/items")
 @RequiredArgsConstructor
 public class BidController {
 
     private final BidService bidService;
 
-    @PostMapping
+    @PostMapping("/{itemId}/bids")
     public ResponseEntity<Long> placeBid(
             @PathVariable Long itemId,
             @Valid @RequestBody PlaceBidRequest request,
-            @RequestHeader("X-User-Id") Long userId
-    ) {
+            @RequestHeader("X-User-Id") Long userId) {
         return new ResponseEntity<>(bidService.placeBid(itemId, request, userId), HttpStatus.CREATED);
     }
 }
