@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,8 +20,12 @@ public class UserController {
     @PostMapping
     public ResponseEntity<Long> createUser(
             @Valid @RequestBody UserCreateRequest request,
-            @RequestHeader(name = "X-Creator-Role") Role creatorRole // Temporary header until Security is added
+            Authentication authentication // Injected by Spring Security from the logged-in principal
     ) {
+
+        Role creatorRole = Role.valueOf(
+                authentication.getAuthorities().iterator().next().getAuthority());
+
         Long userId = userService.createUser(request, creatorRole);
         return new ResponseEntity<>(userId, HttpStatus.CREATED);
     }
