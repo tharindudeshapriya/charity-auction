@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+
 @Service
 @RequiredArgsConstructor
 public class BidServiceImpl implements BidService {
@@ -25,6 +27,7 @@ public class BidServiceImpl implements BidService {
     private final BidRepository bidRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     @Transactional
@@ -32,7 +35,7 @@ public class BidServiceImpl implements BidService {
         // 1. Fetch Item and User
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new ResourceNotFoundException("Item not found: " + itemId));
-        
+
         User currentUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
 
@@ -52,21 +55,24 @@ public class BidServiceImpl implements BidService {
         }
 
         // 5. Amount Validation
-        // If it's the first bid, it must be >= starting price. 
+        // If it's the first bid, it must be >= starting price.
         // If there are previous bids, it must be > current highest bid.
-        // (Note: Implementation logic ensures currentHighestBid starts at startingPrice in ItemServiceImpl)
+        // (Note: Implementation logic ensures currentHighestBid starts at startingPrice
+        // in ItemServiceImpl)
         if (item.getHighestBidder() == null) {
             if (request.getAmount() < item.getStartingPrice()) {
                 throw new BusinessException("Bid must be at least the starting price: " + item.getStartingPrice());
             }
         } else {
             if (request.getAmount() <= item.getCurrentHighestBid()) {
-                throw new BusinessException("Bid must be higher than the current highest bid: " + item.getCurrentHighestBid());
+                throw new BusinessException(
+                        "Bid must be higher than the current highest bid: " + item.getCurrentHighestBid());
             }
         }
 
         // 6. Save Bid and Update Item
-        // Note: @Version field in Item handles concurrent race conditions automatically.
+        // Note: @Version field in Item handles concurrent race conditions
+        // automatically.
         Bid bid = new Bid();
         bid.setAmount(request.getAmount());
         bid.setBidTime(LocalDateTime.now());
@@ -77,6 +83,15 @@ public class BidServiceImpl implements BidService {
         item.setCurrentHighestBid(request.getAmount());
         item.setHighestBidder(currentUser);
         itemRepository.save(item);
+
+        // 7. Broadcast the new bid via WebSockets
+        com.tmdeshapriya.charity_auction.dto.BidResponse bidResponse = new com.tmdeshapriya.charity_auction.dto.BidResponse(
+                bid.getId(),
+                item.getId(),
+                bid.getAmount(),
+                currentUser.getUsername(),
+                bid.getBidTime());
+        messagingTemplate.convertAndSend("/topic/items/" + itemId + "/bids", bidResponse);
 
         return bid.getId();
     }
