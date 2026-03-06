@@ -17,4 +17,7 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     // Optimized DB query for the scheduler: only pull items that are ACTIVE and
     // expired
     List<Item> findByStatusAndAuctionEndTimeBefore(ItemStatus status, LocalDateTime time);
+
+    Page<Item> findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(String name, String description,
+            Pageable pageable);
 }

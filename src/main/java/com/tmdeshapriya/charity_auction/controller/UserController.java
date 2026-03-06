@@ -1,5 +1,6 @@
 package com.tmdeshapriya.charity_auction.controller;
 
+import com.tmdeshapriya.charity_auction.dto.UpdateUserRequest;
 import com.tmdeshapriya.charity_auction.dto.UserCreateRequest;
 import com.tmdeshapriya.charity_auction.entity.Role;
 import com.tmdeshapriya.charity_auction.service.UserService;
@@ -28,5 +29,12 @@ public class UserController {
 
         Long userId = userService.createUser(request, creatorRole);
         return new ResponseEntity<>(userId, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Long> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateUserRequest request) {
+        return ResponseEntity.ok(userService.updateUser(id, request));
     }
 }

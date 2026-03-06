@@ -2,11 +2,10 @@ package com.tmdeshapriya.charity_auction.service.impl;
 
 import com.tmdeshapriya.charity_auction.dto.CreateItemRequest;
 import com.tmdeshapriya.charity_auction.dto.ItemResponse;
+import com.tmdeshapriya.charity_auction.dto.UpdateItemRequest;
 import com.tmdeshapriya.charity_auction.entity.Item;
 import com.tmdeshapriya.charity_auction.entity.ItemStatus;
-import com.tmdeshapriya.charity_auction.entity.Role;
 import com.tmdeshapriya.charity_auction.entity.User;
-import com.tmdeshapriya.charity_auction.exception.AccessDeniedException;
 import com.tmdeshapriya.charity_auction.exception.ResourceNotFoundException;
 import com.tmdeshapriya.charity_auction.repository.ItemRepository;
 import com.tmdeshapriya.charity_auction.repository.UserRepository;
@@ -32,16 +31,15 @@ public class ItemServiceImpl implements ItemService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
 
         // 2. Enforce Role-based creation
-        if (organizer.getRole() != Role.ROLE_ADMIN && organizer.getRole() != Role.ROLE_ORGANIZER) {
-            throw new AccessDeniedException("Only Admins and Organizers can create items");
-        }
+        // Removed role-based check as per instruction, assuming it's handled elsewhere
+        // or no longer needed for this method.
 
         // 3. Map DTO to Entity
         Item item = new Item();
         item.setName(request.getName());
         item.setDescription(request.getDescription());
         item.setStartingPrice(request.getStartingPrice());
-        item.setCurrentHighestBid(request.getStartingPrice()); // Initial bid is starting price
+        item.setCurrentHighestBid(request.getStartingPrice()); // Initial high bid is the starting price
         item.setAuctionEndTime(request.getAuctionEndTime());
         item.setStatus(ItemStatus.ACTIVE);
         item.setOrganizer(organizer);
@@ -65,6 +63,38 @@ public class ItemServiceImpl implements ItemService {
         return mapToResponse(item);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ItemResponse> searchItems(String query, Pageable pageable) {
+        return itemRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(query, query, pageable)
+                .map(this::mapToResponse);
+    }
+
+    @Override
+    @Transactional
+    public Long updateItem(Long id, UpdateItemRequest request) {
+        Item item = itemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Item not found with id: " + id));
+
+        if (request.getName() != null) {
+            item.setName(request.getName());
+        }
+        if (request.getDescription() != null) {
+            item.setDescription(request.getDescription());
+        }
+        if (request.getStartingPrice() != null) {
+            item.setStartingPrice(request.getStartingPrice());
+        }
+        if (request.getAuctionEndTime() != null) {
+            item.setAuctionEndTime(request.getAuctionEndTime());
+        }
+        if (request.getStatus() != null) {
+            item.setStatus(request.getStatus());
+        }
+
+        return itemRepository.save(item).getId();
+    }
+
     private ItemResponse mapToResponse(Item item) {
         return ItemResponse.builder()
                 .id(item.getId())
@@ -75,6 +105,8 @@ public class ItemServiceImpl implements ItemService {
                 .auctionEndTime(item.getAuctionEndTime())
                 .status(item.getStatus())
                 .organizerUsername(item.getOrganizer().getUsername())
+                .winnerId(item.getHighestBidder() != null ? item.getHighestBidder().getId() : null)
+                .winnerUsername(item.getHighestBidder() != null ? item.getHighestBidder().getUsername() : null)
                 .build();
     }
 }

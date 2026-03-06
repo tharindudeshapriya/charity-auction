@@ -1,10 +1,12 @@
 package com.tmdeshapriya.charity_auction.service.impl;
 
+import com.tmdeshapriya.charity_auction.dto.UpdateUserRequest;
 import com.tmdeshapriya.charity_auction.dto.UserCreateRequest;
 import com.tmdeshapriya.charity_auction.entity.Role;
 import com.tmdeshapriya.charity_auction.entity.User;
 import com.tmdeshapriya.charity_auction.exception.AccessDeniedException;
 import com.tmdeshapriya.charity_auction.exception.DuplicateResourceException;
+import com.tmdeshapriya.charity_auction.exception.ResourceNotFoundException;
 import com.tmdeshapriya.charity_auction.repository.UserRepository;
 import com.tmdeshapriya.charity_auction.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,25 @@ public class UserServiceImpl implements UserService {
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
+
+        return userRepository.save(user).getId();
+    }
+
+    @Override
+    @Transactional
+    public Long updateUser(Long id, UpdateUserRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+
+        if (request.getUsername() != null) {
+            user.setUsername(request.getUsername());
+        }
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        if (request.getRole() != null) {
+            user.setRole(request.getRole());
+        }
 
         return userRepository.save(user).getId();
     }
