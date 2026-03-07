@@ -106,8 +106,8 @@ The system is built on three core JPA entities mapped to MySQL tables via Hibern
 
 #### 1. User Management Flow
 1. An `ADMIN` or `ORGANIZER` sends a `POST /users` request with a `UserCreateRequest` DTO (username, password, role).
-2. `UserController` receives the request. It reads the caller's role from the Spring Security `Authentication` principal and passes it to the service.
-3. `UserServiceImpl.createUser()` validates the role hierarchy (e.g., an `ORGANIZER` can only create `BIDDER` users). It rejects duplicates via `UserRepository.existsByUsername()`.
+2. `UserController` receives the request. It reads the caller's role from the granted authorities in the `Authentication` object and passes it to the service.
+3. `UserServiceImpl.createUser()` validates the role hierarchy (e.g., an `ORGANIZER` can only create `BIDDER` users). It rejects duplicates by checking if `userRepository.findByUsername()` returns a value.
 4. The password is BCrypt-hashed using `PasswordEncoder` before the `User` entity is saved via `UserRepository.save()`.
 5. The new user's generated `id` is returned with a `201 CREATED` response.
 6. Updates follow the same path via `PUT /users/{id}` → `UserController` → `UserServiceImpl.updateUser()` → `UserRepository.save()`, restricted to `ADMIN` only.
@@ -123,10 +123,11 @@ The system is built on three core JPA entities mapped to MySQL tables via Hibern
 1. A `BIDDER` sends `POST /items/{itemId}/bids` with a `PlaceBidRequest` DTO containing the bid `amount`.
 2. `BidController` extracts the authenticated user's `userId` directly from the in-memory `AuthenticatedUser` principal.
 3. `BidServiceImpl.placeBid()` enforces all business rules in sequence:
-   * Fetches the `Item` by ID. Throws `ItemNotFoundException` if not found.
-   * Validates `item.getStatus() == ACTIVE`. Throws `AuctionClosedException` if not.
-   * Prevents self-bidding: checks `item.getOrganizer().getId() == bidderId`. Throws `SelfBiddingException` if matched.
-   * Validates `bid.getAmount() > item.getCurrentHighestBid()`. Throws `InsufficientBidException` if not.
+   * Fetches the `Item` by ID. Throws `ResourceNotFoundException` if not found.
+   * Validates `item.getStatus() == ACTIVE` and ensures the auction has not ended. Throws `BusinessException` if not.
+   * Prevents anti-shill bidding: checks `item.getOrganizer().getId() == bidderId`. Throws `AccessDeniedException` if matched.
+   * Prevents anti-self bidding: checks if the bidder is already the current highest bidder. Throws `BusinessException` if matched.
+   * Validates `bid.getAmount() > item.getCurrentHighestBid()`. Throws `BusinessException` if not.
    * Saves the `Bid` entity. Updates `item.currentHighestBid` and `item.highestBidder`, then saves the `Item`.
 4. On successful save, `SimpMessagingTemplate.convertAndSend("/topic/items/{itemId}/bids", bidResponse)` broadcasts the new bid to all WebSocket subscribers in real time.
 5. The new bid's generated `id` is returned with a `201 CREATED` response.
