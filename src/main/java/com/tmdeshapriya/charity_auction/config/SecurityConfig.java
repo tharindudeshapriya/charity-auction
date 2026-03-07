@@ -52,7 +52,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/items").hasAnyRole("ORGANIZER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/items/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/items/*/bids").hasRole("BIDDER")
-                        .requestMatchers(HttpMethod.GET, "/items/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/items/**").permitAll()
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults());
 
