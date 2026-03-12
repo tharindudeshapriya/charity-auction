@@ -48,12 +48,12 @@ export default function SettingsPage() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName" className="font-bold">Full Name</Label>
-                  <Input id="firstName" defaultValue={user.name} className="rounded-xl py-6" />
+                  <Label htmlFor="firstName" className="font-bold">Username</Label>
+                  <Input id="firstName" defaultValue={user.username} className="rounded-xl py-6" disabled />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email" className="font-bold">Email Address</Label>
-                  <Input id="email" defaultValue={user.email} className="rounded-xl py-6" disabled />
+                  <Input id="email" defaultValue="To Be Updated" className="rounded-xl py-6" disabled />
                 </div>
               </div>
               <div className="space-y-2">
@@ -102,28 +102,9 @@ export default function SettingsPage() {
               </div>
               <CardDescription>Stay updated on your bids.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-bold">Outbid Alerts</Label>
-                  <p className="text-xs text-muted-foreground">Notify me immediately if outbid.</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-bold">New Auctions</Label>
-                  <p className="text-xs text-muted-foreground">Weekly digest of new items.</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-bold">Impact Reports</Label>
-                  <p className="text-xs text-muted-foreground">Updates from charities you support.</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
+            <CardContent className="space-y-6 flex flex-col items-center justify-center py-12">
+              <p className="text-sm font-headline font-bold text-muted-foreground uppercase tracking-widest text-center">Notifications: To Be Updated</p>
+              <p className="text-[10px] text-muted-foreground text-center max-w-[200px] mt-2">Preference persistence is currently pending backend integration.</p>
             </CardContent>
           </Card>
 
@@ -135,12 +116,9 @@ export default function SettingsPage() {
                 <CardTitle className="text-lg font-headline">Privacy</CardTitle>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Anonymous Bidding</Label>
-                <Switch />
-              </div>
-              <p className="text-[10px] text-muted-foreground">When enabled, your name will be masked as "B***r" on all public auction listings.</p>
+            <CardContent className="space-y-4 flex flex-col items-center justify-center py-8">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-center">Privacy Masking: To Be Updated</p>
+              <p className="text-[10px] text-muted-foreground text-center mt-2">Bidding anonymity features are currently not supported by the backend.</p>
             </CardContent>
           </Card>
 

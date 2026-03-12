@@ -11,27 +11,38 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Gavel, Mail, Lock, User, Github, Sparkles, ShieldCheck, Briefcase, UserCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const { login } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate a successful login for the UI demo
-    setTimeout(() => {
-      login('BIDDER');
+    try {
+      // Note: Backend uses username for auth, so we'll use the email as username
+      await login(email, password);
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully signed in.",
+      });
       router.push('/dashboard');
+    } catch (error) {
+      toast({
+        title: "Authentication Failed",
+        description: "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleDemoLogin = (role: 'ADMIN' | 'ORGANIZER' | 'BIDDER') => {
-    login(role);
-    router.push('/dashboard');
-  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -66,10 +77,18 @@ export default function LoginPage() {
                 <CardContent className="space-y-4">
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
+                      <Label htmlFor="email">Email Address / Username</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                        <Input id="email" type="email" placeholder="name@example.com" className="pl-10 py-6 rounded-xl" required />
+                        <Input 
+                          id="email" 
+                          type="text" 
+                          placeholder="admin" 
+                          className="pl-10 py-6 rounded-xl" 
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required 
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -79,7 +98,15 @@ export default function LoginPage() {
                       </div>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                        <Input id="password" type="password" placeholder="••••••••" className="pl-10 py-6 rounded-xl" required />
+                        <Input 
+                          id="password" 
+                          type="password" 
+                          placeholder="••••••••" 
+                          className="pl-10 py-6 rounded-xl" 
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required 
+                        />
                       </div>
                     </div>
                     <Button type="submit" className="w-full py-6 rounded-xl bg-primary hover:bg-primary/90 font-bold" disabled={loading}>
@@ -87,41 +114,6 @@ export default function LoginPage() {
                     </Button>
                   </form>
 
-                  <div className="relative my-8">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-border" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground font-bold">Quick Demo Access</span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3">
-                    <Button 
-                      variant="outline" 
-                      className="py-6 rounded-xl gap-3 font-bold justify-start px-6 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all"
-                      onClick={() => handleDemoLogin('ADMIN')}
-                    >
-                      <ShieldCheck size={18} className="text-primary" />
-                      Login as Administrator
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="py-6 rounded-xl gap-3 font-bold justify-start px-6 border-accent/20 hover:bg-accent/5 hover:text-accent transition-all"
-                      onClick={() => handleDemoLogin('ORGANIZER')}
-                    >
-                      <Briefcase size={18} className="text-accent" />
-                      Login as Organizer
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="py-6 rounded-xl gap-3 font-bold justify-start px-6 border-muted-foreground/20 hover:bg-secondary transition-all"
-                      onClick={() => handleDemoLogin('BIDDER')}
-                    >
-                      <UserCircle size={18} />
-                      Login as Bidder
-                    </Button>
-                  </div>
                 </CardContent>
                 <CardFooter>
                   <p className="text-center text-xs text-muted-foreground w-full font-medium">

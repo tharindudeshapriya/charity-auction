@@ -9,12 +9,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sparkles, Loader2, Save, Send } from 'lucide-react';
-import { generateItemDescription } from '@/ai/flows/generate-item-description-flow';
 import { toast } from '@/hooks/use-toast';
+
+import { itemService } from '@/lib/services/item-service';
+import { useRouter } from 'next/navigation';
 
 export default function CreateItemPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [formData, setFormData] = useState({
     itemName: '',
     category: '',
@@ -22,33 +26,37 @@ export default function CreateItemPage() {
     keyFeatures: '',
     description: '',
     startingBid: '',
+    endsAt: '',
   });
 
-  const handleGenerateDescription = async () => {
-    if (!formData.itemName || !formData.category || !formData.condition) {
-      toast({
-        title: "Incomplete Details",
-        description: "Please provide item name, category, and condition first.",
-        variant: "destructive",
-      });
+  const handlePublish = async () => {
+    if (!formData.itemName || !formData.description || !formData.startingBid || !formData.endsAt) {
+      toast({ title: "Incomplete Details", description: "Please fill in all required fields.", variant: "destructive" });
       return;
     }
 
-    setLoading(true);
+    setIsPublishing(true);
     try {
-      const result = await generateItemDescription({
-        itemName: formData.itemName,
-        category: formData.category,
-        condition: formData.condition,
-        keyFeatures: formData.keyFeatures.split(',').map(s => s.trim()).filter(Boolean),
+      await itemService.createItem({
+        name: formData.itemName,
+        description: formData.description,
+        startingPrice: Number(formData.startingBid),
+        auctionEndTime: formData.endsAt,
       });
-      setFormData({ ...formData, description: result.description });
-      toast({ title: "Description Generated!", description: "AI has crafted a compelling description for your item." });
-    } catch (error) {
-      toast({ title: "Generation Failed", description: "Something went wrong with the AI assistant.", variant: "destructive" });
+      toast({ title: "Auction Published!", description: "Your item is now live in the gallery." });
+      router.push('/dashboard/items');
+    } catch (error: any) {
+      toast({ title: "Publishing Failed", description: error.message || "Could not publish the auction.", variant: "destructive" });
     } finally {
-      setLoading(false);
+      setIsPublishing(false);
     }
+  };
+
+  const handleGenerateDescription = async () => {
+    toast({
+      title: "AI Assist: To Be Updated",
+      description: "AI description generation is currently pending backend integration.",
+    });
   };
 
   return (
@@ -108,13 +116,14 @@ export default function CreateItemPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="features" className="font-bold">Key Features (Comma separated)</Label>
+                <Label htmlFor="endsAt" className="font-bold">Auction End Time</Label>
                 <Input 
-                  id="features" 
-                  placeholder="e.g. Original box, certificate of authenticity, signed" 
+                  id="endsAt" 
+                  type="datetime-local"
                   className="rounded-xl py-6"
-                  value={formData.keyFeatures}
-                  onChange={(e) => setFormData({ ...formData, keyFeatures: e.target.value })}
+                  required
+                  value={formData.endsAt}
+                  onChange={(e) => setFormData({ ...formData, endsAt: e.target.value })}
                 />
               </div>
             </CardContent>
@@ -172,17 +181,20 @@ export default function CreateItemPage() {
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground font-medium uppercase">Commission</span>
-                  <span className="font-bold">5% to Charity</span>
+                  <span className="font-bold">To Be Updated</span>
                 </div>
               </div>
             </CardContent>
           </Card>
-
           <div className="flex flex-col gap-4">
-            <Button className="w-full py-8 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold text-lg gap-3 shadow-xl shadow-primary/20">
-              <Send size={20} /> Publish Auction
+            <Button 
+              className="w-full py-8 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold text-lg gap-3 shadow-xl shadow-primary/20"
+              onClick={handlePublish}
+              disabled={isPublishing}
+            >
+              {isPublishing ? <Loader2 className="animate-spin" /> : <Send size={20} />} Publish Auction
             </Button>
-            <Button variant="outline" className="w-full py-8 rounded-2xl font-bold text-lg gap-3">
+            <Button variant="outline" className="w-full py-8 rounded-2xl font-bold text-lg gap-3" type="button">
               <Save size={20} /> Save as Draft
             </Button>
           </div>

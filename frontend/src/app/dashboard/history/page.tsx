@@ -12,12 +12,7 @@ export default function BiddingHistoryPage() {
   const { user } = useAuth();
   if (user?.role !== 'BIDDER') return null;
 
-  const history = [
-    { id: 'h1', item: 'Vintage Omega Watch', date: '2023-11-15', amount: 1850, status: 'Outbid', charity: 'Global Education Fund' },
-    { id: 'h2', item: 'Tuscany Villa Stay', date: '2023-11-10', amount: 5500, status: 'Winning', charity: 'Rural Medical Aid' },
-    { id: 'h3', item: 'E-Type Jaguar', date: '2023-11-05', amount: 32000, status: 'Won', charity: 'Ocean Protection' },
-    { id: 'h4', item: 'Abstract Horizon Art', date: '2023-10-28', amount: 4200, status: 'Ended', charity: 'Local Arts Council' },
-  ];
+  const history: any[] = [];
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -39,7 +34,7 @@ export default function BiddingHistoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {history.map((entry) => (
+              {history.length > 0 ? history.map((entry) => (
                 <TableRow key={entry.id} className="group cursor-pointer">
                   <TableCell>
                     <div className="font-bold group-hover:text-primary transition-colors">{entry.item}</div>
@@ -60,7 +55,13 @@ export default function BiddingHistoryPage() {
                     <ArrowRight size={16} className="text-muted-foreground group-hover:translate-x-1 transition-transform" />
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="py-12 text-center">
+                    <p className="text-xl font-headline font-bold text-muted-foreground uppercase tracking-widest">Bidding History: To Be Updated</p>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -72,8 +73,8 @@ export default function BiddingHistoryPage() {
             <div className="p-3 bg-white/10 rounded-2xl w-fit">
               <History size={24} />
             </div>
-            <h3 className="text-3xl font-headline font-bold">Total Impact</h3>
-            <p className="text-primary-foreground/70 leading-relaxed">Through your bidding activity, you have helped raise over <span className="text-white font-bold">$43,550</span> for our verified charity partners this year.</p>
+            <h3 className="text-3xl font-headline font-bold">Total Impact: To Be Updated</h3>
+            <p className="text-primary-foreground/70 leading-relaxed">Your total charitable contribution through successful auctions will be calculated here once integrated with the backend.</p>
           </CardContent>
         </Card>
         

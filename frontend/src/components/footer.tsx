@@ -47,15 +47,15 @@ export function Footer() {
             <ul className="space-y-4 text-sm text-muted-foreground">
               <li className="flex gap-3 items-center">
                 <MapPin size={18} className="text-accent" />
-                <span>123 Auction Way, Geneva, CH</span>
+                <span>To Be Updated</span>
               </li>
               <li className="flex gap-3 items-center">
                 <Phone size={18} className="text-accent" />
-                <span>+41 22 555 0123</span>
+                <span>To Be Updated</span>
               </li>
               <li className="flex gap-3 items-center">
                 <Mail size={18} className="text-accent" />
-                <span>hello@communibid.com</span>
+                <span>To Be Updated</span>
               </li>
             </ul>
           </div>

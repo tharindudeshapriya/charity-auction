@@ -1,78 +1,120 @@
 "use client"
 
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Gavel } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Activity, BellRing } from "lucide-react";
+import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
+import { Item } from "@/lib/services/item-service";
 
-const INITIAL_ACTIVITIES = [
-  { id: 1, user: 'Sarah M.', action: 'placed a bid', item: 'Vintage Watch', amount: 1950, time: '2m ago' },
-  { id: 2, user: 'John D.', action: 'won the auction', item: 'Tuscany Villa', amount: 5500, time: '15m ago' },
-  { id: 3, user: 'Elena V.', action: 'added new item', item: 'Modern Art', amount: null, time: '1h ago' },
-  { id: 4, user: 'Mark P.', action: 'placed a bid', item: 'E-Type Jaguar', amount: 32500, time: '2h ago' },
-];
+interface BidEvent {
+  id: number;
+  itemId: number;
+  amount: number;
+  bidderName: string;
+  bidTime: string;
+}
 
-export function LiveActivityFeed() {
-  const [activities, setActivities] = useState(INITIAL_ACTIVITIES);
+export function LiveActivityFeed({ featuredItems }: { featuredItems: Item[] }) {
+  const [liveBids, setLiveBids] = useState<(BidEvent & { itemName: string })[]>([]);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const users = ['Alex R.', 'Maria S.', 'David L.', 'Sophia K.', 'Julian B.'];
-      const items = ['Omega Seamaster', 'Abstract Horizon', 'Tuscany Villa', 'Natural Sapphire'];
-      const actions = ['placed a bid', 'is watching', 'increased bid on'];
-      
-      const newActivity = {
-        id: Date.now(),
-        user: users[Math.floor(Math.random() * users.length)],
-        action: actions[Math.floor(Math.random() * actions.length)],
-        item: items[Math.floor(Math.random() * items.length)],
-        amount: Math.floor(Math.random() * 5000) + 1000,
-        time: 'Just now'
-      };
+    if (!featuredItems || featuredItems.length === 0) return;
 
-      setActivities(prev => [newActivity, ...prev.slice(0, 5)]);
-    }, 8000);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    const socket = new SockJS(`${apiUrl}/ws-auction`);
+    
+    const stompClient = new Client({
+        webSocketFactory: () => socket as any,
+        debug: (str) => {
+            // console.log(str);
+        },
+        reconnectDelay: 5000,
+        heartbeatIncoming: 4000,
+        heartbeatOutgoing: 4000,
+    });
 
-    return () => clearInterval(interval);
-  }, []);
+    stompClient.onConnect = (frame) => {
+        setConnectionStatus('connected');
+        
+        featuredItems.forEach(item => {
+            stompClient.subscribe(`/topic/items/${item.id}/bids`, (message) => {
+                if (message.body) {
+                    const bid: BidEvent = JSON.parse(message.body);
+                    setLiveBids(prev => {
+                        const newBid = { ...bid, itemName: item.name };
+                        // Keep only the last 10 bids
+                        return [newBid, ...prev].slice(0, 10);
+                    });
+                }
+            });
+        });
+    };
+
+    stompClient.onStompError = (frame) => {
+        console.error('Broker reported error: ' + frame.headers['message']);
+        console.error('Additional details: ' + frame.body);
+        setConnectionStatus('error');
+    };
+
+    stompClient.activate();
+
+    return () => {
+        stompClient.deactivate();
+    };
+  }, [featuredItems]);
 
   return (
-    <Card className="border-none shadow-xl bg-card/50 backdrop-blur-md overflow-hidden animate-in fade-in duration-700">
-      <CardHeader className="flex flex-row items-center justify-between border-b border-border/50 pb-4">
-        <div className="flex items-center gap-2">
-          <Activity size={20} className="text-accent animate-pulse" />
-          <CardTitle className="text-xl font-headline font-bold text-primary">Live Community Pulse</CardTitle>
-        </div>
-        <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-widest text-accent border-accent/30">
-          Real-time
-        </Badge>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="divide-y divide-border/50">
-          {activities.map((activity) => (
-            <div key={activity.id} className="p-6 flex gap-4 items-start hover:bg-primary/5 transition-colors group">
-              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-sm text-primary shrink-0 group-hover:scale-110 transition-transform">
-                {activity.user[0]}
-              </div>
-              <div className="flex-grow space-y-1">
-                <div className="flex justify-between items-start">
-                  <p className="text-sm leading-tight">
-                    <span className="font-bold text-primary">{activity.user}</span> {activity.action} <span className="font-bold text-foreground">"{activity.item}"</span>
-                  </p>
-                  <span className="text-[10px] text-muted-foreground font-bold uppercase whitespace-nowrap ml-4">
-                    {activity.time}
-                  </span>
-                </div>
-                {activity.amount && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <Gavel size={12} className="text-accent" />
-                    <span className="text-xs font-bold text-accent">${activity.amount.toLocaleString()}</span>
-                  </div>
-                )}
-              </div>
+    <Card className="border-none shadow-xl bg-card/50 backdrop-blur-md overflow-hidden min-h-[300px] flex flex-col">
+      <CardHeader className="border-b bg-background/50 pb-4">
+        <div className="flex justify-between items-center">
+            <CardTitle className="font-headline flex items-center gap-2">
+                <Activity size={20} className="text-primary" /> 
+                Live Bid Feed
+            </CardTitle>
+            <div className="flex items-center gap-2">
+                <span className="relative flex h-3 w-3">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${connectionStatus === 'connected' ? 'bg-green-400' : 'bg-yellow-400'}`}></span>
+                  <span className={`relative inline-flex rounded-full h-3 w-3 ${connectionStatus === 'connected' ? 'bg-green-500' : connectionStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500'}`}></span>
+                </span>
+                <span className="text-xs font-bold text-muted-foreground uppercase">{connectionStatus}</span>
             </div>
-          ))}
         </div>
+      </CardHeader>
+      <CardContent className="p-0 flex-grow relative">
+        {liveBids.length === 0 ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-muted-foreground/60 w-full min-h-[200px]">
+                <BellRing size={32} className="mb-4 opacity-20" />
+                <p className="font-medium">Listening for live bids...</p>
+                <p className="text-sm mt-2">Bids placed on featured items will appear here instantly.</p>
+            </div>
+        ) : (
+            <div className="divide-y divide-border/50 max-h-[400px] overflow-y-auto">
+                {liveBids.map((bid, i) => (
+                    <div key={`${bid.id}-${i}`} className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
+                                {bid.bidderName.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <p className="font-bold text-sm">
+                                    <span className="text-primary">{bid.bidderName}</span> placed a bid
+                                </p>
+                                <p className="text-xs text-muted-foreground font-medium truncate max-w-[200px] sm:max-w-[300px]">
+                                    on {bid.itemName}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <p className="font-headline font-bold text-lg text-primary">${bid.amount.toLocaleString()}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase">Just now</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        )}
       </CardContent>
     </Card>
   );

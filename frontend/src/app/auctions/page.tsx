@@ -1,10 +1,9 @@
 "use client"
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { AuctionCard } from '@/components/auction-card';
-import { MOCK_AUCTIONS } from '@/app/lib/mock-data';
+import { Item, itemService } from '@/lib/services/item-service';
 import { Input } from '@/components/ui/input';
 import { 
   Select, 
@@ -13,17 +12,41 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function AuctionGallery() {
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
 
-  const filtered = MOCK_AUCTIONS.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
+  useEffect(() => {
+    loadItems();
+  }, [search]); // Reload when search changes
+
+  const loadItems = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      let result;
+      if (search) {
+        result = await itemService.searchItems(search);
+      } else {
+        result = await itemService.getItems();
+      }
+      setItems(result.content);
+    } catch (err) {
+      setError('Failed to load auctions. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filtered = items.filter(item => {
     const matchesCategory = category === 'all' || item.category === category;
-    return matchesSearch && matchesCategory;
+    return matchesCategory;
   });
 
   return (
@@ -41,12 +64,14 @@ export default function AuctionGallery() {
         <div className="flex flex-col md:flex-row gap-6 mb-12 items-center">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-            <Input 
-              placeholder="Search by item name or keywords..." 
-              className="pl-12 py-6 text-base rounded-xl border-border bg-white dark:bg-card shadow-sm"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <form onSubmit={(e) => { e.preventDefault(); loadItems(); }}>
+              <Input 
+                placeholder="Search by item name or keywords..." 
+                className="pl-12 py-6 text-base rounded-xl border-border bg-white dark:bg-card shadow-sm"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </form>
           </div>
           
           <div className="flex gap-4 w-full md:w-auto">
@@ -63,14 +88,24 @@ export default function AuctionGallery() {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" className="py-6 rounded-xl gap-2 px-6">
-              <SlidersHorizontal size={18} /> Filters
+            <Button variant="outline" className="py-6 rounded-xl gap-2 px-6" onClick={loadItems}>
+              <SlidersHorizontal size={18} /> Refresh
             </Button>
           </div>
         </div>
 
         {/* Results */}
-        {filtered.length > 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <Loader2 className="h-12 w-12 text-primary animate-spin" />
+            <p className="text-muted-foreground font-medium">Curating your experience...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-24 space-y-4 bg-destructive/5 rounded-3xl border-2 border-dashed border-destructive/20">
+            <div className="text-2xl font-headline font-bold text-destructive">{error}</div>
+            <Button onClick={loadItems}>Try Again</Button>
+          </div>
+        ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {filtered.map((item) => (
               <AuctionCard key={item.id} item={item} />

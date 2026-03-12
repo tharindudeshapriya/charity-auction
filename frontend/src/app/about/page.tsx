@@ -23,13 +23,12 @@ import {
   Palette
 } from 'lucide-react';
 import Image from 'next/image';
-import { PlaceHolderImages } from '@/app/lib/placeholder-images';
 import Link from 'next/link';
 
 export default function AboutPage() {
-  const missionImage = PlaceHolderImages.find(img => img.id === 'hero-art-gallery')?.imageUrl || '';
-  const communityImage = PlaceHolderImages.find(img => img.id === 'hero-charity')?.imageUrl || '';
-  const processImage = PlaceHolderImages.find(img => img.id === 'hero-luxury')?.imageUrl || '';
+  const missionImage = 'https://images.unsplash.com/photo-1491243950741-95e91db24c2b?q=80&w=2070';
+  const communityImage = 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=2073';
+  const processImage = 'https://images.unsplash.com/photo-1549462980-6a03f72c6bb5?q=80&w=2070';
 
   const values = [
     {

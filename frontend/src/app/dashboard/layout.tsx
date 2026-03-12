@@ -14,6 +14,17 @@ import {
   SidebarTrigger,
   SidebarFooter
 } from '@/components/ui/sidebar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { 
   LayoutDashboard, 
   Gavel, 
@@ -56,7 +67,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     ORGANIZER: [
       { icon: LayoutDashboard, label: 'Performance', href: '/dashboard' },
       { icon: PlusCircle, label: 'Create Listing', href: '/dashboard/create' },
-      { icon: Gavel, label: 'My Auctions', href: '/dashboard/my-items' },
+      { icon: Users, label: 'Add Bidder', href: '/dashboard/users' },
     ],
     BIDDER: [
       { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
@@ -65,8 +76,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       { icon: History, label: 'Bidding History', href: '/dashboard/history' },
     ]
   };
-
-  const currentMenu = menuItems[user.role as keyof typeof menuItems] || [];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -79,11 +88,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="flex items-center gap-4">
                   <Avatar className="h-12 w-12 border-2 border-primary/20 p-0.5">
                     <AvatarFallback className="bg-primary text-primary-foreground font-bold text-lg">
-                      {user.name[0]}
+                      {user.username[0].toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
-                    <span className="font-headline font-bold text-primary truncate max-w-[120px]">{user.name}</span>
+                    <span className="font-headline font-bold text-primary truncate max-w-[120px]">{user.username}</span>
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mt-0.5">{user.role}</span>
                   </div>
                 </div>
@@ -91,42 +100,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </SidebarHeader>
 
             <SidebarContent className="px-3">
-              <SidebarMenu>
-                <div className="px-3 mb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground/60">Main Menu</span>
-                </div>
-                {currentMenu.map((item) => (
-                  <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton 
-                      asChild 
-                      className="py-6 px-4 rounded-2xl hover:bg-primary/5 hover:text-primary transition-all group border border-transparent hover:border-primary/10"
-                    >
-                      <Link href={item.href} className="flex items-center justify-between w-full">
-                        <div className="flex items-center gap-4">
-                          <item.icon className="text-muted-foreground group-hover:text-primary transition-colors group-hover:scale-110" size={18} />
-                          <span className="font-bold text-sm tracking-tight">{item.label}</span>
-                        </div>
-                        <ChevronRight size={14} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-accent" />
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-                
-                <div className="px-3 mt-8 mb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground/60">Preferences</span>
-                </div>
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild
-                    className="py-6 px-4 rounded-2xl hover:bg-primary/5 hover:text-primary transition-all group border border-transparent hover:border-primary/10"
-                  >
-                    <Link href="/dashboard/settings" className="flex items-center gap-4">
-                      <Settings className="text-muted-foreground group-hover:text-primary group-hover:rotate-45 transition-all" size={18} />
-                      <span className="font-bold text-sm tracking-tight">Account Settings</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
+              <SidebarNavigation userRole={user.role as keyof typeof menuItems} menuItems={menuItems} />
             </SidebarContent>
 
             <SidebarFooter className="p-4 mt-auto">
@@ -135,14 +109,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span className="text-[10px] font-bold uppercase text-primary/60">Session Status</span>
                   <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                 </div>
-                <Button 
-                  variant="ghost" 
-                  onClick={logout}
-                  className="w-full justify-start gap-3 p-0 h-auto hover:bg-transparent text-destructive hover:text-destructive/80 font-bold text-sm"
-                >
-                  <LogOut size={16} />
-                  Sign Out
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start gap-3 p-0 h-auto hover:bg-transparent text-destructive hover:text-destructive/80 font-bold text-sm"
+                    >
+                      <LogOut size={16} />
+                      Sign Out
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-[2rem]">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-2xl font-headline font-bold">Sign Out</AlertDialogTitle>
+                      <AlertDialogDescription className="text-base">
+                        Are you sure you want to sign out of your CommuniBid session?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="mt-8 gap-4">
+                      <AlertDialogCancel className="rounded-full px-8 font-bold border-2">Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={logout}
+                        className="rounded-full px-8 font-bold bg-destructive hover:bg-destructive/90 text-white shadow-lg shadow-destructive/20"
+                      >
+                        Sign Out
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </SidebarFooter>
           </Sidebar>
@@ -169,5 +163,65 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </SidebarProvider>
     </div>
+  );
+}
+
+import { useSidebar } from '@/components/ui/sidebar';
+
+function SidebarNavigation({ userRole, menuItems }: { userRole: string, menuItems: any }) {
+  const { setOpenMobile, isMobile } = useSidebar();
+  const currentMenu = menuItems[userRole] || [];
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
+  return (
+    <SidebarMenu>
+      <div className="px-3 mb-2">
+        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground/60">Main Menu</span>
+      </div>
+      {currentMenu.map((item: any) => (
+        <SidebarMenuItem key={item.label}>
+          <SidebarMenuButton 
+            asChild 
+            className="py-6 px-4 rounded-2xl hover:bg-primary/5 hover:text-primary transition-all group border border-transparent hover:border-primary/10"
+          >
+            <Link 
+              href={item.href} 
+              className="flex items-center justify-between w-full"
+              onClick={handleLinkClick}
+            >
+              <div className="flex items-center gap-4">
+                <item.icon className="text-muted-foreground group-hover:text-primary transition-colors group-hover:scale-110" size={18} />
+                <span className="font-bold text-sm tracking-tight">{item.label}</span>
+              </div>
+              <ChevronRight size={14} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-accent" />
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+      
+      <div className="px-3 mt-8 mb-2">
+        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground/60">Preferences</span>
+      </div>
+      <SidebarMenuItem>
+        <SidebarMenuButton 
+          asChild
+          className="py-6 px-4 rounded-2xl hover:bg-primary/5 hover:text-primary transition-all group border border-transparent hover:border-primary/10"
+        >
+          <Link 
+            href="/dashboard/settings" 
+            className="flex items-center gap-4"
+            onClick={handleLinkClick}
+          >
+            <Settings className="text-muted-foreground group-hover:text-primary group-hover:rotate-45 transition-all" size={18} />
+            <span className="font-bold text-sm tracking-tight">Account Settings</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
   );
 }

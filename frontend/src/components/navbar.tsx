@@ -7,6 +7,17 @@ import { ThemeToggle } from './theme-toggle';
 import { Gavel, LayoutDashboard, LogOut, Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -56,9 +67,30 @@ export function Navbar() {
                     Portal
                   </Button>
                 </Link>
-                <Button variant="outline" size="sm" onClick={logout} className="gap-2 font-bold rounded-full">
-                  <LogOut size={16} />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2 font-bold rounded-full">
+                      <LogOut size={16} />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-[2rem]">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-2xl font-headline font-bold">Sign Out</AlertDialogTitle>
+                      <AlertDialogDescription className="text-base">
+                        Are you sure you want to sign out?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="mt-8 gap-4">
+                      <AlertDialogCancel className="rounded-full px-8 font-bold border-2">Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={logout}
+                        className="rounded-full px-8 font-bold bg-destructive hover:bg-destructive/90 text-white"
+                      >
+                        Sign Out
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             ) : (
               <Link href="/login">
@@ -109,14 +141,34 @@ export function Navbar() {
                           Go to Portal
                         </Button>
                       </Link>
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => { logout(); setIsOpen(false); }} 
-                        className="w-full justify-start gap-4 py-7 rounded-2xl font-bold text-destructive hover:bg-destructive/5"
-                      >
-                        <LogOut size={20} />
-                        Logout
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            className="w-full justify-start gap-4 py-7 rounded-2xl font-bold text-destructive hover:bg-destructive/5"
+                          >
+                            <LogOut size={20} />
+                            Logout
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="rounded-[2rem] w-[90vw] max-w-md mx-auto">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-2xl font-headline font-bold">Sign Out</AlertDialogTitle>
+                            <AlertDialogDescription className="text-base">
+                              Are you sure you want to leave?
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="mt-8 gap-4 flex-col sm:flex-row">
+                            <AlertDialogCancel className="rounded-full py-6 font-bold flex-1 border-2">Cancel</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => { logout(); setIsOpen(false); }}
+                              className="rounded-full py-6 font-bold flex-1 bg-destructive hover:bg-destructive/90 text-white"
+                            >
+                              Logout
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   ) : (
                     <Link href="/login" onClick={() => setIsOpen(false)}>

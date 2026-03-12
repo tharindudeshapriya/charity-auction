@@ -4,26 +4,41 @@
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { AuctionCard } from '@/components/auction-card';
-import { MOCK_AUCTIONS } from '@/app/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles, Heart, Globe, Award, History } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { PlaceHolderImages } from '@/app/lib/placeholder-images';
 import { useAuth } from '@/hooks/use-auth';
 import { LiveActivityFeed } from '@/components/live-activity-feed';
 import { Badge } from '@/components/ui/badge';
 
+import { itemService, Item } from '@/lib/services/item-service';
+
 export default function Home() {
   const { user } = useAuth();
-  const featured = MOCK_AUCTIONS.slice(0, 3);
+  const [featured, setFeatured] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentBg, setCurrentBg] = useState(0);
 
+  useEffect(() => {
+    const loadFeatured = async () => {
+      try {
+        const result = await itemService.getItems(0, 3);
+        setFeatured(result.content);
+      } catch (err) {
+        console.error('Failed to load featured items', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadFeatured();
+  }, []);
+
   const heroBgs = [
-    PlaceHolderImages.find(img => img.id === 'hero-auction-main')?.imageUrl || '',
-    PlaceHolderImages.find(img => img.id === 'hero-charity')?.imageUrl || '',
-    PlaceHolderImages.find(img => img.id === 'hero-luxury')?.imageUrl || ''
-  ].filter(Boolean);
+    'https://images.unsplash.com/photo-1574007557239-acf6863bc375?q=80&w=2070',
+    'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?q=80&w=2070',
+    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070'
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -33,10 +48,10 @@ export default function Home() {
   }, [heroBgs.length]);
 
   return (
-    <div className="relative min-h-screen hero-gradient">
+    <div className="relative min-h-screen hero-gradient p-2 md:p-4 lg:p-6 overflow-x-hidden">
       <Navbar />
       
-      {/* Hero Section */}
+      <div className="relative rounded-[2rem] md:rounded-[3rem] overflow-hidden bg-background shadow-2xl border border-white/10">
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-20">
         <div className="absolute inset-0 z-0">
           {heroBgs.map((bg, index) => (
@@ -85,16 +100,16 @@ export default function Home() {
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 text-center">
             {[
-              { icon: Heart, label: 'Impact Raised', value: '$12.4M' },
-              { icon: Globe, label: 'Global Bidders', value: '45k+' },
-              { icon: Award, label: 'Curated Items', value: '2,800' },
-              { icon: Sparkles, label: 'Verified Charities', value: '150+' },
+              { icon: Heart, label: 'Impact Raised', value: 'To Be Updated' },
+              { icon: Globe, label: 'Global Bidders', value: 'To Be Updated' },
+              { icon: Award, label: 'Curated Items', value: 'To Be Updated' },
+              { icon: Sparkles, label: 'Verified Charities', value: 'To Be Updated' },
             ].map((stat, i) => (
               <div key={i} className="space-y-4 animate-in fade-in slide-in-from-bottom-4" style={{ animationDelay: `${i * 100}ms` }}>
                 <div className="inline-flex p-4 rounded-2xl bg-primary/5 text-primary">
                   <stat.icon size={32} />
                 </div>
-                <div className="text-4xl font-headline font-bold text-primary">{stat.value}</div>
+                <div className="text-lg md:text-2xl font-headline font-bold text-primary">{stat.value}</div>
                 <div className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">{stat.label}</div>
               </div>
             ))}
@@ -152,26 +167,8 @@ export default function Home() {
               {user ? (
                 <LiveActivityFeed />
               ) : (
-                <div className="space-y-6">
-                  {[
-                    { title: "Vintage Patek Philippe", price: "$42,000", charity: "Red Cross", time: "Sold Oct 2023" },
-                    { title: "Tuscany Vineyard Experience", price: "$12,500", charity: "Water.org", time: "Sold Sep 2023" },
-                    { title: "Contemporary Masterpiece", price: "$8,200", charity: "UNICEF", time: "Sold Aug 2023" },
-                  ].map((story, i) => (
-                    <div key={i} className="p-8 rounded-3xl border bg-card/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-primary/20 transition-all">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-xs font-bold text-accent uppercase tracking-widest italic">
-                          <History size={14} /> {story.time}
-                        </div>
-                        <h4 className="text-2xl font-headline font-bold text-primary">{story.title}</h4>
-                        <p className="text-muted-foreground">Benefiting <span className="font-bold text-foreground">{story.charity}</span></p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-3xl font-headline font-bold text-primary">{story.price}</div>
-                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Donated Proceeds</div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="h-full min-h-[300px] p-8 rounded-3xl border bg-card/50 flex flex-col justify-center items-center">
+                  <p className="text-xl font-headline font-bold text-muted-foreground uppercase tracking-widest">Community Stories: To Be Updated</p>
                 </div>
               )}
             </div>
@@ -179,6 +176,7 @@ export default function Home() {
         </div>
       </section>
 
+      </div>
       <Footer />
     </div>
   );

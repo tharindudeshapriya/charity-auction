@@ -2,7 +2,6 @@
 "use client"
 
 import { useAuth } from '@/hooks/use-auth';
-import { MOCK_AUCTIONS } from '@/app/lib/mock-data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trophy, CheckCircle2, Truck, CreditCard, ChevronRight } from 'lucide-react';
@@ -12,8 +11,8 @@ export default function WonItemsPage() {
   const { user } = useAuth();
   if (user?.role !== 'BIDDER') return null;
 
-  // Simulate won items
-  const wonItems = [MOCK_AUCTIONS[3]];
+  // Won items are currently not available via backend listing endpoint
+  const wonItems: any[] = [];
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -90,8 +89,8 @@ export default function WonItemsPage() {
           <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2">
             <Trophy size={32} className="text-muted-foreground/30" />
           </div>
-          <p className="text-xl font-headline font-bold text-muted-foreground">No auctions won yet.</p>
-          <Button variant="link" className="font-bold text-primary">Keep exploring live auctions</Button>
+          <p className="text-xl font-headline font-bold text-muted-foreground">Won Auctions: To Be Updated</p>
+          <Button variant="link" className="font-bold text-primary">This feature is currently pending backend integration.</Button>
         </div>
       )}
     </div>

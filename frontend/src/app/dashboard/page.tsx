@@ -6,31 +6,46 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { DollarSign, Gavel, Users, TrendingUp } from 'lucide-react';
 import { LiveActivityFeed } from '@/components/live-activity-feed';
 
+import { itemService, Item } from '@/lib/services/item-service';
+import { useState, useEffect } from 'react';
+
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const result = await itemService.getItems(0, 50); // Fetch top items for stats
+        setItems(result.content);
+      } catch (err) {
+        console.error('Failed to load stats', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
   if (!user) return null;
 
+  const activeAuctions = items.filter(i => i.status === 'ACTIVE').length;
+  const totalRevenue = items.filter(i => i.status === 'CLOSED').reduce((acc, i) => acc + i.currentHighestBid, 0);
+
   const adminStats = [
-    { label: 'Total Revenue', value: '$1.42M', icon: DollarSign, color: 'text-green-600 bg-green-50' },
-    { label: 'Active Auctions', value: '42', icon: Gavel, color: 'text-primary bg-primary/5' },
-    { label: 'Total Bidders', value: '1,280', icon: Users, color: 'text-accent bg-accent/5' },
-    { label: 'Conversion', value: '84%', icon: TrendingUp, color: 'text-indigo-600 bg-indigo-50' },
+    { label: 'Total Revenue', value: `$${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-green-600 bg-green-50' },
+    { label: 'Active Auctions', value: activeAuctions.toString(), icon: Gavel, color: 'text-primary bg-primary/5' },
+    { label: 'Total Bidders', value: 'To Be Updated', icon: Users, color: 'text-muted-foreground bg-secondary/20' },
+    { label: 'Conversion', value: 'To Be Updated', icon: TrendingUp, color: 'text-muted-foreground bg-secondary/20' },
   ];
 
-  const chartData = [
-    { name: 'Mon', value: 4000 },
-    { name: 'Tue', value: 3000 },
-    { name: 'Wed', value: 6000 },
-    { name: 'Thu', value: 2780 },
-    { name: 'Fri', value: 1890 },
-    { name: 'Sat', value: 2390 },
-    { name: 'Sun', value: 3490 },
-  ];
+  const chartData: any[] = [];
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="space-y-1">
-        <h1 className="text-4xl font-headline font-bold text-primary">Welcome Back, {user.name}</h1>
+        <h1 className="text-4xl font-headline font-bold text-primary">Welcome Back, {user.username}</h1>
         <p className="text-muted-foreground">Here is what is happening across CommuniBid today.</p>
       </div>
 
@@ -45,8 +60,8 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-headline font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                <span className="text-green-500 font-bold">+12.5%</span> from last week
+              <p className="text-xs text-muted-foreground mt-1 italic">
+                To Be Updated
               </p>
             </CardContent>
           </Card>
@@ -58,19 +73,8 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="text-lg font-headline">Revenue Overview</CardTitle>
           </CardHeader>
-          <CardContent className="h-[400px] pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                  cursor={{ fill: 'rgba(79, 53, 118, 0.05)' }}
-                />
-                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <CardContent className="h-[400px] pt-4 flex items-center justify-center">
+            <p className="text-xl font-headline font-bold text-muted-foreground uppercase tracking-widest">Revenue Analytics: To Be Updated</p>
           </CardContent>
         </Card>
 
